@@ -1,6 +1,8 @@
 from threading import Thread, Lock
 
 lock = Lock()
+
+
 class BankAccount(Thread):
     def __init__(self):
         super().__init__()
@@ -16,16 +18,16 @@ class BankAccount(Thread):
 
 
 def deposit_task(account, amount):
-    lock.acquire()
-    for _ in range(5):
-        account.deposit(amount)
-    lock.release()
+    with lock:
+        for _ in range(5):
+            account.deposit(amount)
+
 
 def withdraw_task(account, amount):
-    lock.acquire()
-    for _ in range(5):
-        account.withdraw(amount)
-    lock.release()
+    with lock:
+        for _ in range(5):
+            account.withdraw(amount)
+
 
 account = BankAccount()
 
