@@ -18,31 +18,39 @@ class Cafe:
         count_customer = 0
         while count_customer < 20:
             count_customer += 1
-            self.serve_customer(count_customer)
-            print(f'Посетитель номер {count_customer} прибыл')
+            Customer(self, count_customer).start()
             sleep(1)
 
+    # сразу помещаем в очередь
+    # выполняется это за O(1) так же как и проверка очереди через условие поэтому так
+    # Возможно я не правильно понял задачу и поток нужно было запускать из serve_customer,
+    # но тогда атрибут customer получается вообще не нужен
     def serve_customer(self, customer):
-        while self.queue:
-            for table in self.tables:
-                if table.is_busy:
-                    Customer(self.queue.get(), table).start()
-                    break
+        self.queue.put(customer)
+        current_customer = self.queue.get()
+        table = next((x for x in self.tables if x.is_busy), None)
 
+        if not table or not self.queue.empty():
+            print(f'Посетитель номер {customer.customer} ожидает свободный стол')
+
+            while not table:
+                table = next((x for x in self.tables if x.is_busy), None)
+
+        table.is_busy = False
+        print(f'Посетитель номер {current_customer.customer} сел за стол {table.number}')
+        sleep(5)
+        table.is_busy = True
+        print(f'Посетитель номер {current_customer.customer} покушал и ушёл.')
 
 
 class Customer(threading.Thread):
-    def __init__(self, customer, table):
-        self.customer = customer
-        self.table = table
+    def __init__(self, cafe, customer):
         super().__init__()
+        self.customer = customer
+        self.cafe = cafe
 
     def run(self):
-        self.table.is_busy = False
-        print(f'Посетитель номер {self.customer} сел за стол {self.table.number}')
-        sleep(5)
-        self.table.is_busy = True
-        print(f'Посетитель номер {self.customer} покушал и ушёл.')
+        self.cafe.serve_customer(self)
 
 
 table1 = Table(1)
@@ -53,8 +61,6 @@ tables = [table1, table2, table3]
 cafe = Cafe(tables)
 
 customer_arrival_thread = threading.Thread(target=cafe.customer_arrival)
-serve_arrival_thread = threading.Thread(target=cafe.serve_customer)
 customer_arrival_thread.start()
-serve_arrival_thread.start()
 customer_arrival_thread.join()
-serve_arrival_thread.join()
+
