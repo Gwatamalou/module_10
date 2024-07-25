@@ -22,24 +22,27 @@ class WarehouseManager:
                 print('Товар не найден')
 
     def run(self, request):
-        for i in request:
-            self.process_request(i)
+        print(request)
+        with multiprocessing.Pool(processes=4) as pool:
+            for i in request:
+                self.process_request(i)
 
 
-# Создаем менеджера склада
-manager = WarehouseManager()
+if __name__ == '__main__':
+    # Создаем менеджера склада
+    manager = WarehouseManager()
 
-# Множество запросов на изменение данных о складских запасах
-requests = [
-    ("product1", "receipt", 100),
-    ("product2", "receipt", 150),
-    ("product1", "shipment", 30),
-    ("product3", "receipt", 200),
-    ("product2", "shipment", 50)
-]
+    # Множество запросов на изменение данных о складских запасах
+    requests = [
+        ("product1", "receipt", 100),
+        ("product2", "receipt", 150),
+        ("product1", "shipment", 30),
+        ("product3", "receipt", 200),
+        ("product2", "shipment", 50)
+    ]
 
-# Запускаем обработку запросов
-manager.run(requests)
+    # Запускаем обработку запросов
+    manager.run(requests)
 
-# Выводим обновленные данные о складских запасах
-print(manager.data)
+    # Выводим обновленные данные о складских запасах
+    print(manager.data)
