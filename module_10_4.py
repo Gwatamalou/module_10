@@ -1,7 +1,9 @@
 import queue
-import threading
+from threading import Thread, Lock
 from time import sleep
 
+
+lock = Lock()
 
 class Table:
     def __init__(self, number=int):
@@ -18,6 +20,7 @@ class Cafe:
         count_customer = 0
         while count_customer < 20:
             count_customer += 1
+            print(f'Посетитель номер {count_customer} прибыл.')
             Customer(self, count_customer).start()
             sleep(1)
 
@@ -31,10 +34,11 @@ class Cafe:
         table = next((x for x in self.tables if x.is_busy), None)
 
         if not table or not self.queue.empty():
-            print(f'Посетитель номер {customer.customer} ожидает свободный стол')
+            with lock:
+                print(f'Посетитель номер {customer.customer} ожидает свободный стол')
 
-            while not table:
-                table = next((x for x in self.tables if x.is_busy), None)
+                while not table:
+                    table = next((x for x in self.tables if x.is_busy), None)
 
         table.is_busy = False
         print(f'Посетитель номер {current_customer.customer} сел за стол {table.number}')
@@ -43,7 +47,7 @@ class Cafe:
         print(f'Посетитель номер {current_customer.customer} покушал и ушёл.')
 
 
-class Customer(threading.Thread):
+class Customer(Thread):
     def __init__(self, cafe, customer):
         super().__init__()
         self.customer = customer
@@ -60,7 +64,7 @@ tables = [table1, table2, table3]
 
 cafe = Cafe(tables)
 
-customer_arrival_thread = threading.Thread(target=cafe.customer_arrival)
+customer_arrival_thread = Thread(target=cafe.customer_arrival)
 customer_arrival_thread.start()
 customer_arrival_thread.join()
 
