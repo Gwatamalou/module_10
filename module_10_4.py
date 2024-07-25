@@ -34,8 +34,8 @@ class Cafe:
         table = next((x for x in self.tables if x.is_busy), None)
 
         if not table or not self.queue.empty():
+            print(f'Посетитель номер {customer.customer} ожидает свободный стол')
             with lock:
-                print(f'Посетитель номер {customer.customer} ожидает свободный стол')
 
                 while not table:
                     table = next((x for x in self.tables if x.is_busy), None)
