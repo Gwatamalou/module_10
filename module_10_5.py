@@ -1,4 +1,4 @@
-import multiprocessing
+import multiprocessing as mp
 
 
 class WarehouseManager:
@@ -6,29 +6,34 @@ class WarehouseManager:
     def __init__(self):
         self.data = {}
 
-    def process_request(self, request):
-        if request[1] == "receipt":
-            try:
-                self.data[request[0]] += request[2]
-            except KeyError:
-                self.data[request[0]] = request[2]
-        elif request[1] == "shipment":
-            try:
-                if self.data[request[0]] - request[2] > 0:
-                    self.data[request[0]] -= request[2]
-                else:
-                    print('Недостаточно товара')
-            except KeyError:
-                print('Товар не найден')
+    def process_request(self, request, data, lock):
+        with lock:
+            if request[1] == 'receipt':
+                try:
+                    data[request[0]] += request[2]
+                except KeyError:
+                    data[request[0]] = request[2]
+            elif request[1] == "shipment":
+                try:
+                    if data[request[0]] - request[2] > 0:
+                        data[request[0]] -= request[2]
+                except KeyError:
+                    print('Товар не найден')
 
-    def run(self, request):
-        print(request)
-        with multiprocessing.Pool(processes=4) as pool:
-            for i in request:
-                self.process_request(i)
+    def run(self, requests):
+        process = []
+        with mp.Manager() as manager:
+            requestDict = manager.dict()
+            for request in requests:
+                p = mp.Process(target=self.process_request, args=(request, requestDict, lock,))
+                p.start()
+                p.join()
+            self.data.update(requestDict)
 
 
 if __name__ == '__main__':
+    lock = mp.Lock()
+
     # Создаем менеджера склада
     manager = WarehouseManager()
 
